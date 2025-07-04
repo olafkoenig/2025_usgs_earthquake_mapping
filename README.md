@@ -18,16 +18,20 @@ All in Python, notebook-friendly, and perfect for reproducible geodata work or d
 ## 🚀 Quickstart
 
 1. **Clone and install**
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/earthquake-usgs.git
-   cd earthquake-usgs
-   python -m venv venv
-   source venv/bin/activate
-   pip install -r requirements.txt
 
+```bash
+git clone https://github.com/YOUR-USERNAME/earthquake-usgs.git
+cd earthquake-usgs
+python -m venv venv
+source venv/bin/activate      # Windows : .\venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+---
 
 ## 🗺️ USGS API: Typical Workflow
-```bash
+
+```python
 import geopandas as gpd
 import pandas as pd
 import folium
@@ -50,6 +54,7 @@ events = search(
     starttime=datetime.fromisoformat(date_start),
     endtime=datetime.fromisoformat(date_end),
 )
+
 cols = ["id", "time", "magnitude", "depth", "latitude", "longitude"]
 df = pd.DataFrame([{c: getattr(e, c, None) for c in cols] for e in events])
 
@@ -68,8 +73,11 @@ df_after = pd.DataFrame([{c: getattr(e, c, None) for c in cols] for e in aftersh
 
 # 5. Map results with Folium
 colormap = linear.YlOrRd_09.scale(df["magnitude"].min(), df["magnitude"].max())
-m = folium.Map(location=[df["latitude"].mean(), df["longitude"].mean()],
-               zoom_start=6, tiles="Cartodb dark_matter")
+m = folium.Map(
+    location=[df["latitude"].mean(), df["longitude"].mean()],
+    zoom_start=6,
+    tiles="Cartodb dark_matter"
+)
 for _, row in df.iterrows():
     folium.CircleMarker(
         location=[row["latitude"], row["longitude"]],
@@ -78,20 +86,21 @@ for _, row in df.iterrows():
         fill=True, fill_opacity=0.7, stroke=False,
         popup=f"Mag {row['magnitude']}<br>ID: {row['id']}"
     ).add_to(m)
-m.save("earthquakes_map.html")
 
+m.save("earthquakes_map.html")
+```
+
+---
 
 ## 📎 Notes
-See the USGS ComCat API docs for full endpoint details.
 
-You can extract more products (shakemaps, historical data, losses, ruptures, etc.) from the event detail API or event products JSON.
+* Official docs → <https://earthquake.usgs.gov/fdsnws/event/1/>  
+* You can query extra products (ShakeMap, rupture, losses, historical events…) via the event detail JSON.  
+* All notebooks can be rendered with **Jupyter** or **Quarto ( `.qmd` )** for publishing on GitHub Pages, Netlify, etc.  
 
-All code is notebook-friendly, and can be rendered with Jupyter or Quarto for sharing.
+---
 
 ## ✍️ Credits
-Project by Olaf König
-MIT License
 
-yaml
-Copier
-Modifier
+Project by **Olaf König**  
+MIT License
