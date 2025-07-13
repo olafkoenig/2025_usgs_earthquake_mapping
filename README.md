@@ -1,106 +1,70 @@
-# 2025_seisme_python
-Pipeline to retrieve USGS earthquake data
+# USGS Earthquake Data Downloader & Geospatial Analyzer
 
-# 🛰️ Earthquake Data Analysis — USGS API
+This Jupyter notebook automates the retrieval and geospatial processing of earthquake data and products from the USGS Earthquake Catalog and ShakeMap APIs.  
+**Ultimate goal:** Prepare clean datasets and geodata for mapping and analysis of a major earthquake (magnitude 6+), ready for cartography and visualizations.
 
-**End-to-end workflow for querying, analyzing, and visualizing earthquake data from the USGS API**  
-*Mainshock, aftershocks, impact, historical events, losses, and more.*
+## 🌎 What does this notebook do?
 
----
+- **Downloads** main USGS products for a target earthquake (M6+):
 
-## ✨ Overview
+  - Main event metadata (properties)
+  - ShakeMap and ground shaking data
+  - Fault traces and geometry
+  - Impacted cities
+  - Population exposure
+  - Forecasts and aftershocks
+  - Event comments/annotations
 
-This project shows how to work with the USGS (ComCat) earthquake API, from querying events, building DataFrames, to mapping and analysis.  
-All in Python, notebook-friendly, and perfect for reproducible geodata work or data journalism.
+- **Saves** all datasets as CSV and **GeoPackage (GPKG)** files for easy Geopandas or GIS integration.
 
----
+- **Performs geospatial operations:**
 
-## 🚀 Quickstart
+  - Clips ShakeMap/ground motion grids to land/ocean (using Natural Earth ocean mask)
+  - Computes distances from aftershocks to main fault
+  - Joins, cleans, and harmonizes geometry for direct use in Geopandas or GIS.
 
-1. **Clone and install**
+- **Prepares data** for direct map-making (choropleth, city labels, impact, etc.) and statistical charts.
 
-```bash
-git clone https://github.com/YOUR-USERNAME/earthquake-usgs.git
-cd earthquake-usgs
-python -m venv venv
-source venv/bin/activate      # Windows : .\venv\Scripts\activate
-pip install -r requirements.txt
-```
+## ⚙️ User Parameters
 
----
+Set these parameters at the top of the notebook:
 
-## 🗺️ USGS API: Typical Workflow
+| Parameter     | Description                                 | Example              |
+| ------------- | ------------------------------------------- | -------------------- |
+| `event_id`    | USGS Event ID or custom identifier          | "us7000j8ak"         |
+| `region_bbox` | Bounding box for analysis (min/max lat/lon) | [33, 37, -122, -117] |
+| `starttime`   | Start date (for aftershock queries)         | "2024-01-01"         |
+| `endtime`     | End date (for aftershock queries)           | "2024-06-30"         |
+| `output_path` | Output folder path                          | "./data/"            |
 
-```python
-import geopandas as gpd
-import pandas as pd
-import folium
-from branca.colormap import linear
-from datetime import datetime, timedelta
-from libcomcat.search import search
+**Edit these as needed before running.**
 
-# 1. Load your AOI (area of interest)
-geojson_path = "myanmar.json"
-gdf = gpd.read_file(geojson_path)
-if gdf.crs and gdf.crs.to_epsg() != 4326:
-    gdf = gdf.to_crs(4326)
-minx, miny, maxx, maxy = gdf.total_bounds
+## 📥 Output Files
 
-# 2. Search for earthquakes
-date_start, date_end = "2025-03-22", "2025-04-30"
-events = search(
-    minlongitude=minx, minlatitude=miny,
-    maxlongitude=maxx, maxlatitude=maxy,
-    starttime=datetime.fromisoformat(date_start),
-    endtime=datetime.fromisoformat(date_end),
-)
+- **GeoPackage (.gpkg)**: Geodata layers for maps (fault, cities, exposures, MMI polygons, etc.)
+- **CSV**: Tables of properties, exposure, aftershocks, etc.
+- **Plots**: (optional) Quick visual checks (e.g., epicenter, city distribution)
 
-cols = ["id", "time", "magnitude", "depth", "latitude", "longitude"]
-df = pd.DataFrame([{c: getattr(e, c, None) for c in cols] for e in events])
+## 🔑 Main USGS Products Handled
 
-# 3. Identify mainshock (by time or magnitude)
-mainshock_time = "2025-03-28T00:00:00.000000Z"
-mainshock_dt = datetime.fromisoformat(mainshock_time.replace("Z", "+00:00"))
+- **Main Earthquake**: Event metadata and geometry
+- **ShakeMap**: Ground shaking grids and contours
+- **Properties**: Summary of event and impact
+- **Comments**: Official annotations/descriptions
+- **Cities**: Impacted places/cities with location
+- **Exposure**: Population at risk, by shaking intensity
+- **Forecast**: Aftershock forecasts and probabilities
+- **Fault**: Main fault trace and geometry (polyline)
+- **Aftershocks**: List and details of aftershocks in region
 
-# 4. Find aftershocks (e.g. 7 days after mainshock)
-aftershocks = search(
-    minlongitude=minx, minlatitude=miny,
-    maxlongitude=maxx, maxlatitude=maxy,
-    starttime=mainshock_dt,
-    endtime=mainshock_dt + timedelta(days=7),
-)
-df_after = pd.DataFrame([{c: getattr(e, c, None) for c in cols] for e in aftershocks])
+## 🗺️ Geospatial Processing
 
-# 5. Map results with Folium
-colormap = linear.YlOrRd_09.scale(df["magnitude"].min(), df["magnitude"].max())
-m = folium.Map(
-    location=[df["latitude"].mean(), df["longitude"].mean()],
-    zoom_start=6,
-    tiles="Cartodb dark_matter"
-)
-for _, row in df.iterrows():
-    folium.CircleMarker(
-        location=[row["latitude"], row["longitude"]],
-        radius=2 * (row["magnitude"] - 3),
-        color=colormap(row["magnitude"]),
-        fill=True, fill_opacity=0.7, stroke=False,
-        popup=f"Mag {row['magnitude']}<br>ID: {row['id']}"
-    ).add_to(m)
+- **Clip** ShakeMap/MMI layers to exclude ocean (Natural Earth ocean mask)
+- **Compute distance** from cities/exposures to fault
+- **Join & clean** all layers for seamless map production
 
-m.save("earthquakes_map.html")
-```
+## 📝 How to use
 
----
-
-## 📎 Notes
-
-* Official docs → <https://earthquake.usgs.gov/fdsnws/event/1/>  
-* You can query extra products (ShakeMap, rupture, losses, historical events…) via the event detail JSON.  
-* All notebooks can be rendered with **Jupyter** or **Quarto ( `.qmd` )** for publishing on GitHub Pages, Netlify, etc.  
-
----
-
-## ✍️ Credits
-
-Project by **Olaf König**  
-MIT License
+1. Set parameters (`event_id`, region, output path, etc.) at the top.
+2. Run the notebook sequentially.
+3. Use output files in GIS software (QGIS, ArcGIS) or for charting.
