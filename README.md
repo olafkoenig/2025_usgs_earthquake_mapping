@@ -15,7 +15,7 @@ This Jupyter notebook automates the retrieval and geospatial processing of earth
   - Forecasts and aftershocks
   - Event comments/annotations
 
-- **Saves** all datasets as CSV and **GeoPackage (GPKG)** files for easy Geopandas or GIS integration.
+- **Saves** all datasets as CSV or **GeoPackage (GPKG)** files for easy Geopandas or GIS integration.
 
 - **Performs geospatial operations:**
 
