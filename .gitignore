@@ -276,3 +276,4 @@ rsconnect/
 /*_files/
 
 # End of https://www.toptal.com/developers/gitignore/api/python,osx,jupyternotebooks,r
+.DS_Store
