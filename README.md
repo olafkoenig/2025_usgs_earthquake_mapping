@@ -1,3 +1,5 @@
+## [Article](https://olafkoenig.github.io/2025_usgs_earthquake_mapping/)
+
 # USGS Earthquake Data Downloader & Geospatial Analyzer
 
 This Jupyter notebook automates the retrieval and geospatial processing of earthquake data and products from the USGS Earthquake Catalog and ShakeMap APIs.  
